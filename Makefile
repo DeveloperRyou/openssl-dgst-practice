@@ -13,6 +13,7 @@ endif
 
 SRCS_DIR = ./src
 SRCS = src/main.c \
+		src/4109.c \
 		src/signtool.c \
 		src/file.c \
 		src/init.c \

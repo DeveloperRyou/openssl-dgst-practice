@@ -58,10 +58,10 @@ void read_exec(t_signtool *signtool)
 	signtool->exec_length = ftell(signtool->exec_fp);
 	rewind(signtool->exec_fp);
 
-	signtool->exec = (unsigned char*)malloc(sizeof(unsigned char) * signtool->exec_length);
+	signtool->exec = (unsigned char*)malloc(sizeof(unsigned char) * signtool->exec_length + 1);
 	if (signtool->exec == NULL)
 		error("infile malloc error");
-	memset(signtool->exec, 0, signtool->exec_length);
+	memset(signtool->exec, 0, signtool->exec_length + 1);
 
 	size_t count = 0;
 	while(1)
