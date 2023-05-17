@@ -85,8 +85,17 @@ void verify_exec(t_signtool *signtool)
 	// verify sign
 	unsigned char *sign = NULL;
 	size_t signlen = 0;
-	int ret = EVP_PKEY_verify(ctx, sign, signlen, md, SHA256_DIGEST_LENGTH);
+	// Determine sign buffer length
+	parse_signature(signtool, NULL, &signlen);
+	
+	sign = OPENSSL_malloc(signlen);
+	if (!sign)
+		error("sign malloc error");
+	bzero(sign, signlen);
+	// Set sign buffer from .signature
+	parse_signature(signtool, sign, &signlen);
 
+	int ret = EVP_PKEY_verify(ctx, sign, signlen, md, SHA256_DIGEST_LENGTH);
 	if (ret == 1)
 		printf("success");
 	else if (ret == 0)
@@ -95,4 +104,5 @@ void verify_exec(t_signtool *signtool)
 		error("verify error");
 		
 	OPENSSL_free(md); md = NULL;
+	OPENSSL_free(sign); sign = NULL;	
 }
