@@ -19,20 +19,19 @@ typedef struct s_signtool
 	FILE *exec_fp;
 	char *key_filename;
 	char *exec_filename;
-	unsigned char *exec;
-	size_t exec_length;
+	unsigned char *text;
+	size_t textlen;
 	int operator;
 }	t_signtool;
 
 // parse.c
 void parse_operator(t_signtool *signtool, char **operator);
-int parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen);
-
+int parse_section(FILE *elf_fp, const char *section, 
+	unsigned char **text, size_t *textlen);
 // file.c
 void open_key(t_signtool *signtool, char *filename);
 void open_exec(t_signtool *signtool, char *filename);
 void open_files(t_signtool *signtool);
-void read_exec(t_signtool *signtool);
 
 // init.c
 void init_signtool(t_signtool *signtool);

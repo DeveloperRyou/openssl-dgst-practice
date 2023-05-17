@@ -10,7 +10,9 @@ int main(int argc, char **argv)
 	init_signtool(&signtool);
 	parse_operator(&signtool, argv);
 	open_files(&signtool);
-	read_exec(&signtool);
+	if (parse_section(signtool.exec_fp, ".text", 
+		&(signtool.text), &(signtool.textlen)) <= 0)
+		error("section text parsing error");
 
 	if (signtool.operator == SIGN)
 		sign_exec(&signtool);

@@ -21,47 +21,53 @@ void parse_operator(t_signtool *signtool, char **operator)
 }
 
 
-int parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen) {
-	const char* section_name = ".signature";
+int parse_section(FILE *elf_fp, const char *section, 
+	unsigned char **text, size_t *textlen) {
+	
+	// get length
+	fseek(elf_fp, 0, SEEK_END);
+	size_t execlen = ftell(elf_fp);
+	rewind(elf_fp);
 
-    // ELF 파일을 메모리로 매핑
-    void* file_data = mmap(NULL, signtool->exec_length, PROT_READ, MAP_PRIVATE, 
-		fileno(signtool->exec_fp), 0);
+	// elf to memory
+    void* file_data = mmap(NULL, execlen, PROT_READ, MAP_PRIVATE, 
+		fileno(elf_fp), 0);
     if (file_data == MAP_FAILED)
         error("mmap");
 
-    // ELF 파일 헤더 확인
+    // get elf header
     Elf64_Ehdr* elf_header = (Elf64_Ehdr*)file_data;
     if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0) {
-        munmap(file_data, signtool->exec_length);
+        munmap(file_data, execlen);
 		error("Not an ELF file");
     }
 
-    // 섹션 헤더 시작 주소 계산
+    // calculate section header table
     Elf64_Shdr* section_header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
 
-    // 섹션 이름 테이블 확인
-    Elf64_Shdr* section_name_table = &section_header_table[elf_header->e_shstrndx];
-    char* section_names = (char*)file_data + section_name_table->sh_offset;
+    // make section table
+    Elf64_Shdr* section_table = &section_header_table[elf_header->e_shstrndx];
+    char* sections = (char*)file_data + section_table->sh_offset;
 
-    // 섹션 반복하여 특정 섹션 찾기
+    // find section
     for (int i = 0; i < elf_header->e_shnum; i++) {
-        char* name = &section_names[section_header_table[i].sh_name];
-        if (strcmp(name, section_name) == 0) {
-            // 특정 섹션 찾음
+        char* name = &sections[section_header_table[i].sh_name];
+        if (strcmp(name, section) == 0) {
             void* section_data = (unsigned char*)file_data + section_header_table[i].sh_offset;
-            *signlen = section_header_table[i].sh_size;
-
-            // 섹션 내용 출력 또는 원하는 작업 수행
-			if (sign != NULL) {
-				for (size_t j = 0; j < *signlen; j++) {
-					sign[j] = ((unsigned char*)section_data)[j];
-				}
+            *textlen = section_header_table[i].sh_size;
+			
+            // get section
+			*text = (unsigned char *)malloc(*textlen);
+			if (*text == NULL)
+				error("section malloc error");
+			bzero(*text, *textlen);
+			for (size_t j = 0; j < *textlen; j++) {
+				(*text)[j] = ((unsigned char*)section_data)[j];
 			}
 			return (1);
         }
     }
 
-    munmap(file_data, signtool->exec_length);
+    munmap(file_data, execlen);
 	return (0);
 }

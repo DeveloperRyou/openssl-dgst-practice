@@ -10,7 +10,7 @@ void sign_exec(t_signtool *signtool)
 	if (!md)
 		error("md malloc error");
 	bzero(md, SHA256_DIGEST_LENGTH);
-	md = SHA256(signtool->exec, signtool->exec_length, md);
+	md = SHA256(signtool->text, signtool->textlen, md);
 	if (!md)
 		error("md digest error");
 
@@ -63,15 +63,8 @@ void verify_exec(t_signtool *signtool)
 	// parse signature
 	unsigned char *sign = NULL;
 	size_t signlen = 0;
-	// Determine sign buffer length
-	if (parse_signature(signtool, NULL, &signlen) <= 0)
-		error("determine signlen error");
-	sign = OPENSSL_malloc(signlen);
-	if (!sign)
-		error("sign malloc error");
-	bzero(sign, signlen);
 	// Set sign buffer from .signature
-	if (parse_signature(signtool, sign, &signlen) <= 0)
+	if (parse_section(signtool->exec_fp, ".signature", &sign, &signlen) <= 0)
 		error("signature parse error");
 	
 	// make md
@@ -80,7 +73,7 @@ void verify_exec(t_signtool *signtool)
 	if (!md)
 		error("md malloc error");
 	bzero(md, SHA256_DIGEST_LENGTH);
-	md = SHA256(signtool->exec + signlen, signtool->exec_length - signlen, md);
+	md = SHA256(signtool->text, signtool->textlen, md);
 	if (!md)
 		error("md digest error");
 
@@ -110,5 +103,5 @@ void verify_exec(t_signtool *signtool)
 		error("verify error");
 		
 	OPENSSL_free(md); md = NULL;
-	OPENSSL_free(sign); sign = NULL;	
+	free(sign); sign = NULL;	
 }
