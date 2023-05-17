@@ -11,6 +11,8 @@ void sign_exec(t_signtool *signtool)
 		error("md malloc error");
 	bzero(md, SHA256_DIGEST_LENGTH);
 	md = SHA256(signtool->exec, signtool->exec_length, md);
+	if (!md)
+		error("md digest error");
 
 	// private key
 	EVP_PKEY *signing_key = NULL;
@@ -58,13 +60,29 @@ void verify_exec(t_signtool *signtool)
 {
 	EVP_PKEY_CTX *ctx = NULL;
 	
+	// parse signature
+	unsigned char *sign = NULL;
+	size_t signlen = 0;
+	// Determine sign buffer length
+	if (parse_signature(signtool, NULL, &signlen) <= 0)
+		error("determine signlen error");
+	sign = OPENSSL_malloc(signlen);
+	if (!sign)
+		error("sign malloc error");
+	bzero(sign, signlen);
+	// Set sign buffer from .signature
+	if (parse_signature(signtool, sign, &signlen) <= 0)
+		error("signature parse error");
+	
 	// make md
 	unsigned char *md = NULL;
 	md = OPENSSL_malloc(SHA256_DIGEST_LENGTH);
 	if (!md)
 		error("md malloc error");
 	bzero(md, SHA256_DIGEST_LENGTH);
-	md = SHA256(signtool->exec, signtool->exec_length, md);
+	md = SHA256(signtool->exec + signlen, signtool->exec_length - signlen, md);
+	if (!md)
+		error("md digest error");
 
 	// public key
 	EVP_PKEY *verify_key = NULL;
@@ -82,19 +100,7 @@ void verify_exec(t_signtool *signtool)
 	if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
 		error("ctx set signature error");
 
-	// verify sign
-	unsigned char *sign = NULL;
-	size_t signlen = 0;
-	// Determine sign buffer length
-	parse_signature(signtool, NULL, &signlen);
-	
-	sign = OPENSSL_malloc(signlen);
-	if (!sign)
-		error("sign malloc error");
-	bzero(sign, signlen);
-	// Set sign buffer from .signature
-	parse_signature(signtool, sign, &signlen);
-
+	// verify
 	int ret = EVP_PKEY_verify(ctx, sign, signlen, md, SHA256_DIGEST_LENGTH);
 	if (ret == 1)
 		printf("success");

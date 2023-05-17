@@ -21,7 +21,7 @@ void parse_operator(t_signtool *signtool, char **operator)
 }
 
 
-void parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen) {
+int parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen) {
 	const char* section_name = ".signature";
 
     // ELF 파일을 메모리로 매핑
@@ -58,9 +58,10 @@ void parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen)
 					sign[j] = ((unsigned char*)section_data)[j];
 				}
 			}
-            break;
+			return (1);
         }
     }
 
     munmap(file_data, signtool->exec_length);
+	return (0);
 }

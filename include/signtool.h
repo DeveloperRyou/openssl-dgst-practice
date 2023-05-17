@@ -26,7 +26,7 @@ typedef struct s_signtool
 
 // parse.c
 void parse_operator(t_signtool *signtool, char **operator);
-void parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen);
+int parse_signature(t_signtool *signtool, unsigned char *sign, size_t *signlen);
 
 // file.c
 void open_key(t_signtool *signtool, char *filename);
