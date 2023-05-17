@@ -7,6 +7,7 @@
 # include <openssl/pem.h>
 # include <openssl/evp.h> 
 # include <openssl/rsa.h>
+# include <openssl/err.h>
 
 # define SIGN 0
 # define VERIFY 1
@@ -17,9 +18,7 @@ typedef struct s_signtool
 	FILE *exec_fp;
 	char *key_filename;
 	char *exec_filename;
-	unsigned char *key;
 	unsigned char *exec;
-	size_t key_length;
 	size_t exec_length;
 	int operator;
 }	t_signtool;
@@ -31,9 +30,7 @@ void parse_operator(t_signtool *signtool, char **operator);
 void open_key(t_signtool *signtool, char *filename);
 void open_exec(t_signtool *signtool, char *filename);
 void open_files(t_signtool *signtool);
-void read_key(t_signtool *signtool);
 void read_exec(t_signtool *signtool);
-void read_files(t_signtool *signtool);
 
 // init.c
 void init_signtool(t_signtool *signtool);

@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	init_signtool(&signtool);
 	parse_operator(&signtool, argv);
 	open_files(&signtool);
-	read_files(&signtool);
+	read_exec(&signtool);
 
 	if (signtool.operator == SIGN)
 		sign_exec(&signtool);
