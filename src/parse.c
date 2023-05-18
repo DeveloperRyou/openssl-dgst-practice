@@ -41,16 +41,12 @@ int parse_excutable_section(FILE *elf_fp, unsigned char **text, size_t *textlen)
     }
 
     // calculate section header table
-    Elf64_Shdr* section_header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
-
-    // make section table
-    Elf64_Shdr* section_table = &section_header_table[elf_header->e_shstrndx];
-    char* sections = (char*)file_data + section_table->sh_offset;
+    Elf64_Shdr* header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
 
     // find section
     for (int i = 0; i < elf_header->e_shnum; i++)
-        if (section_header_table[i].sh_flags & SHF_EXECINSTR)
-            *textlen += section_header_table[i].sh_size;
+        if (header_table[i].sh_flags & SHF_EXECINSTR)
+            *textlen += header_table[i].sh_size;
 	if (*textlen == 0)
 		return (0);
 
@@ -61,9 +57,9 @@ int parse_excutable_section(FILE *elf_fp, unsigned char **text, size_t *textlen)
 	bzero(*text, *textlen);
 	size_t index = 0;
     for (int i = 0; i < elf_header->e_shnum; i++) {
-        if (section_header_table[i].sh_flags & SHF_EXECINSTR) {
-            void* section_data = (unsigned char*)file_data + section_header_table[i].sh_offset;
-			size_t sectionlen = section_header_table[i].sh_size;
+        if (header_table[i].sh_flags & SHF_EXECINSTR) {
+            void* section_data = (unsigned char*)file_data + header_table[i].sh_offset;
+			size_t sectionlen = header_table[i].sh_size;
 
 			for (size_t j = 0; j < sectionlen; j++) {
 				(*text)[index + j] = ((unsigned char*)section_data)[j];
@@ -100,19 +96,19 @@ int parse_section(FILE *elf_fp, const char *section,
     }
 
     // calculate section header table
-    Elf64_Shdr* section_header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
+    Elf64_Shdr* header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
 
     // make section table
-    Elf64_Shdr* section_table = &section_header_table[elf_header->e_shstrndx];
-    char* sections = (char*)file_data + section_table->sh_offset;
+    Elf64_Shdr* table = &header_table[elf_header->e_shstrndx];
+    char* sections = (char*)file_data + table->sh_offset;
 
 	int flag = 0;
     // find section
     for (int i = 0; i < elf_header->e_shnum; i++) {
-        char* name = &sections[section_header_table[i].sh_name];
+        char* name = &sections[header_table[i].sh_name];
         if (strcmp(name, section) == 0) {
-            void* section_data = (unsigned char*)file_data + section_header_table[i].sh_offset;
-            *textlen = section_header_table[i].sh_size;
+            void* section_data = (unsigned char*)file_data + header_table[i].sh_offset;
+            *textlen = header_table[i].sh_size;
 			
             // get section
 			*text = (unsigned char *)malloc(*textlen);
