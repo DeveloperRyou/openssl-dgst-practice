@@ -26,11 +26,11 @@ typedef struct s_signtool
 
 // parse.c
 void parse_operator(t_signtool *signtool, char **operator);
+int parse_excutable_section(FILE *elf_fp, unsigned char **text, size_t *textlen);
 int parse_section(FILE *elf_fp, const char *section, 
 	unsigned char **text, size_t *textlen);
+
 // file.c
-void open_key(t_signtool *signtool, char *filename);
-void open_exec(t_signtool *signtool, char *filename);
 void open_files(t_signtool *signtool);
 
 // init.c

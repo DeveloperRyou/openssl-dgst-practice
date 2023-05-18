@@ -20,10 +20,8 @@ void parse_operator(t_signtool *signtool, char **operator)
 	}
 }
 
-
-int parse_section(FILE *elf_fp, const char *section, 
-	unsigned char **text, size_t *textlen) {
-	
+int parse_excutable_section(FILE *elf_fp, unsigned char **text, size_t *textlen) {
+	*textlen = 0;
 	// get length
 	fseek(elf_fp, 0, SEEK_END);
 	size_t execlen = ftell(elf_fp);
@@ -50,6 +48,66 @@ int parse_section(FILE *elf_fp, const char *section,
     char* sections = (char*)file_data + section_table->sh_offset;
 
     // find section
+    for (int i = 0; i < elf_header->e_shnum; i++)
+        if (section_header_table[i].sh_flags & SHF_EXECINSTR)
+            *textlen += section_header_table[i].sh_size;
+	if (*textlen == 0)
+		return (0);
+
+	// get section
+	*text = (unsigned char *)malloc(*textlen);
+	if (*text == NULL)
+		error("section malloc error");
+	bzero(*text, *textlen);
+	size_t index = 0;
+    for (int i = 0; i < elf_header->e_shnum; i++) {
+        if (section_header_table[i].sh_flags & SHF_EXECINSTR) {
+            void* section_data = (unsigned char*)file_data + section_header_table[i].sh_offset;
+			size_t sectionlen = section_header_table[i].sh_size;
+
+			for (size_t j = 0; j < sectionlen; j++) {
+				(*text)[index + j] = ((unsigned char*)section_data)[j];
+			}
+			index += sectionlen;
+        }
+    }
+
+    munmap(file_data, execlen);
+	return (1);
+}
+
+
+int parse_section(FILE *elf_fp, const char *section, 
+	unsigned char **text, size_t *textlen) {
+	*textlen = 0;
+	
+	// get length
+	fseek(elf_fp, 0, SEEK_END);
+	size_t execlen = ftell(elf_fp);
+	rewind(elf_fp);
+
+	// elf to memory
+    void* file_data = mmap(NULL, execlen, PROT_READ, MAP_PRIVATE, 
+		fileno(elf_fp), 0);
+    if (file_data == MAP_FAILED)
+        error("mmap");
+
+    // get elf header
+    Elf64_Ehdr* elf_header = (Elf64_Ehdr*)file_data;
+    if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0) {
+        munmap(file_data, execlen);
+		error("Not an ELF file");
+    }
+
+    // calculate section header table
+    Elf64_Shdr* section_header_table = (Elf64_Shdr*)((char*)file_data + elf_header->e_shoff);
+
+    // make section table
+    Elf64_Shdr* section_table = &section_header_table[elf_header->e_shstrndx];
+    char* sections = (char*)file_data + section_table->sh_offset;
+
+	int flag = 0;
+    // find section
     for (int i = 0; i < elf_header->e_shnum; i++) {
         char* name = &sections[section_header_table[i].sh_name];
         if (strcmp(name, section) == 0) {
@@ -64,10 +122,11 @@ int parse_section(FILE *elf_fp, const char *section,
 			for (size_t j = 0; j < *textlen; j++) {
 				(*text)[j] = ((unsigned char*)section_data)[j];
 			}
-			return (1);
+			flag = 1;
+			break;
         }
     }
 
     munmap(file_data, execlen);
-	return (0);
+	return (flag);
 }

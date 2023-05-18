@@ -47,10 +47,7 @@ void sign_exec(t_signtool *signtool)
 
 	int ret = add_section(signtool->exec_filename, sign, signlen);
 	if (ret < 0)
-	{
-		printf("%d\n", ret);
 		error("add signature error");
-	}
 
 	OPENSSL_free(md); md = NULL;
 	OPENSSL_free(sign); sign = NULL;
@@ -96,11 +93,11 @@ void verify_exec(t_signtool *signtool)
 	// verify
 	int ret = EVP_PKEY_verify(ctx, sign, signlen, md, SHA256_DIGEST_LENGTH);
 	if (ret == 1)
-		printf("success");
+		printf("OK\n");
 	else if (ret == 0)
-		printf("fail");
+		printf("NOT_OK\n");
 	else if (ret < 0)
-		error("verify error");
+		error("NOT_SIGNED\n");
 		
 	OPENSSL_free(md); md = NULL;
 	free(sign); sign = NULL;	
