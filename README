@@ -1,3 +1,25 @@
 Name : Ryou Sungmin
 Student ID : 2018147553
 Description :
+Program has structures which are t_signtool.
+t_signtool has information about file pointers, file names, excutable section buffer and length.
+
+After initiating t_signtool, program start to parse arguments.
+In parser, it checks argument options and set file names.
+
+After parsing, program open files.
+After open files, program parse excutable section and save it to "char \*text" buffer.
+Program throws error while opening and reading file, parsing, allocating has problems.
+
+After read excutable section, program start to sign / verify files.
+
+sign :
+First, program make md by hashing excutable section to RSA-256.
+And with the private key, program start to make signature.
+After make signature, program make new binary file which has section .signature with signature.
+
+verify :
+First, program make md by hashing excutable section to RSA-256.
+Then program parse section .signature.
+And with the public key, program start to verify signature.
+Program prints status of verify binary file to standard output.

@@ -62,7 +62,10 @@ void verify_exec(t_signtool *signtool)
 	size_t signlen = 0;
 	// Set sign buffer from .signature
 	if (parse_section(signtool->exec_fp, ".signature", &sign, &signlen) <= 0)
-		error("signature parse error");
+	{
+		printf("NOT_SIGNED\n");
+		return ;
+	}
 	
 	// make md
 	unsigned char *md = NULL;
@@ -97,7 +100,7 @@ void verify_exec(t_signtool *signtool)
 	else if (ret == 0)
 		printf("NOT_OK\n");
 	else if (ret < 0)
-		error("NOT_SIGNED\n");
+		printf("NOT_SIGNED\n");
 		
 	OPENSSL_free(md); md = NULL;
 	free(sign); sign = NULL;	
